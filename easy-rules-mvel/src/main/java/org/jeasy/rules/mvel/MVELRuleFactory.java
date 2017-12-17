@@ -21,31 +21,30 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package org.jeasy.rules.tutorials.shop;
+package org.jeasy.rules.mvel;
 
-import org.jeasy.rules.api.Facts;
-import org.jeasy.rules.core.BasicRule;
+import java.io.File;
+import java.io.FileNotFoundException;
 
-public class AgeRule extends BasicRule {
+/**
+ * Factory to create {@link MVELRule} instances.
+ *
+ * @author Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+ */
+public class MVELRuleFactory {
 
-    private static final int ADULT_AGE = 18;
+    private static MVELRuleDefinitionReader reader = new MVELRuleDefinitionReader();
 
-    public AgeRule() {
-        super("AgeRule", "Check if person's age is > 18 and marks the person as adult", 1);
+    /**
+     * Create a new {@link MVELRule} from a rule descriptor.
+     *
+     * @param ruleDescriptor in yaml format
+     * @return a new rule
+     * @throws FileNotFoundException if the rule descriptor cannot be found
+     */
+    public static MVELRule createRuleFrom(File ruleDescriptor) throws FileNotFoundException {
+        MVELRuleDefinition ruleDefinition = reader.read(ruleDescriptor);
+        return ruleDefinition.create();
     }
 
-    @Override
-    public boolean evaluate(Facts facts) {
-        Person person = (Person) facts.get("person");
-        return person.getAge() > ADULT_AGE;
-    }
-
-    @Override
-    public void execute(Facts facts) {
-        Person person = (Person) facts.get("person");
-        person.setAdult(true);
-        System.out.printf("Person %s has been marked as adult", person.getName());
-        System.out.println();
-    }
-    
 }

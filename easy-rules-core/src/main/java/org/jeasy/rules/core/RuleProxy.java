@@ -29,9 +29,12 @@ import org.jeasy.rules.annotation.Fact;
 import org.jeasy.rules.annotation.Priority;
 import org.jeasy.rules.api.Facts;
 import org.jeasy.rules.api.Rule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -49,6 +52,8 @@ public class RuleProxy implements InvocationHandler {
 
     private static RuleDefinitionValidator ruleDefinitionValidator = new RuleDefinitionValidator();
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RuleProxy.class);
+
     private RuleProxy(final Object target) {
         this.target = target;
     }
@@ -61,7 +66,7 @@ public class RuleProxy implements InvocationHandler {
      */
     public static Rule asRule(final Object rule) {
         Rule result;
-        if (Utils.getInterfaces(rule).contains(Rule.class)) {
+        if (rule instanceof Rule) {
             result = (Rule) rule;
         } else {
             ruleDefinitionValidator.validateRuleDefinition(rule);
@@ -76,55 +81,64 @@ public class RuleProxy implements InvocationHandler {
     @Override
     public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
         String methodName = method.getName();
-        if (methodName.equals("getName")) {
-            return getRuleName();
+        switch (methodName) {
+            case "getName":
+                return getRuleName();
+            case "getDescription":
+                return getRuleDescription();
+            case "getPriority":
+                return getRulePriority();
+            case "compareTo":
+                return compareToMethod(args);
+            case "evaluate":
+                return evaluateMethod(args);
+            case "execute":
+                return executeMethod(args);
+            case "equals":
+                return equalsMethod(args);
+            case "hashCode":
+                return hashCodeMethod();
+            case "toString":
+                return toStringMethod();
+            default:
+                return null;
         }
-        if (methodName.equals("getDescription")) {
-            return getRuleDescription();
-        }
-        if (methodName.equals("getPriority")) {
-            return getRulePriority();
-        }
-        if (methodName.equals("evaluate")) {
-            Facts facts = (Facts) args[0];
-            Method conditionMethod = getConditionMethod();
+    }
+
+    private Object evaluateMethod(final Object[] args) throws IllegalAccessException, InvocationTargetException {
+        Facts facts = (Facts) args[0];
+        Method conditionMethod = getConditionMethod();
+        try {
             List<Object> actualParameters = getActualParameters(conditionMethod, facts);
-            try {
-                return conditionMethod.invoke(target, actualParameters.toArray()); // validated upfront
-            } catch (IllegalArgumentException e) {
-                String error = "Types of injected facts in method '%s' in rule '%s' do not match parameters types";
-                throw new RuntimeException(format(error, conditionMethod.getName(), target.getClass().getName()), e);
-            }
+            return conditionMethod.invoke(target, actualParameters.toArray()); // validated upfront
+        } catch (NoSuchFactException e) {
+            LOGGER.info("Rule '{}' has been evaluated to false due to a declared but missing fact '{}' in {}",
+                    getTargetClass().getName(), e.getMissingFact(), facts);
+            return false;
+        } catch (IllegalArgumentException e) {
+            String error = "Types of injected facts in method '%s' in rule '%s' do not match parameters types";
+            throw new RuntimeException(format(error, conditionMethod.getName(), getTargetClass().getName()), e);
         }
-        if (methodName.equals("execute")) {
-            for (ActionMethodOrderBean actionMethodBean : getActionMethodBeans()) {
-                Facts facts = (Facts) args[0];
-                Method actionMethod = actionMethodBean.getMethod();
-                List<Object> actualParameters = getActualParameters(actionMethod, facts);
-                actionMethod.invoke(target, actualParameters.toArray());
-            }
-        }
-        if (methodName.equals("equals")) {
-            return target.equals(args[0]);
-        }
-        if (methodName.equals("hashCode")) {
-            return target.hashCode();
-        }
-        if (methodName.equals("toString")) {
-            return target.toString();
-        }
-        if (methodName.equals("compareTo")) {
-            Method compareToMethod = getCompareToMethod();
-            if (compareToMethod != null) {
-                return compareToMethod.invoke(target, args);
-            } else {
-                Rule otherRule = (Rule) args[0];
-                return compareTo(otherRule);
-            }
+    }
+
+    private Object executeMethod(final Object[] args) throws IllegalAccessException, InvocationTargetException {
+        Facts facts = (Facts) args[0];
+        for (ActionMethodOrderBean actionMethodBean : getActionMethodBeans()) {
+            Method actionMethod = actionMethodBean.getMethod();
+            List<Object> actualParameters = getActualParameters(actionMethod, facts);
+            actionMethod.invoke(target, actualParameters.toArray());
         }
         return null;
     }
-
+    private Object compareToMethod(final Object[] args) throws Exception {
+        Method compareToMethod = getCompareToMethod();
+        if (compareToMethod != null) {
+            return compareToMethod.invoke(target, args);
+        } else {
+            Rule otherRule = (Rule) args[0];
+            return compareTo(otherRule);
+        }
+    }
     private List<Object> getActualParameters(Method method, Facts facts) {
         List<Object> actualParameters = new ArrayList<>();
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
@@ -133,7 +147,7 @@ public class RuleProxy implements InvocationHandler {
                 String factName = ((Fact) (annotations[0])).value(); //validated upfront.
                 Object fact = facts.get(factName);
                 if (fact == null) {
-                    throw new RuntimeException(format("No fact named %s found in known facts", factName));
+                    throw new NoSuchFactException(format("No fact named '%s' found in known facts: \n%s", factName, facts), factName);
                 }
                 actualParameters.add(fact);
             } else {
@@ -143,17 +157,49 @@ public class RuleProxy implements InvocationHandler {
         return actualParameters;
     }
 
-    private int compareTo(final Rule otherRule) throws Exception {
-        String otherName = otherRule.getName();
+    private boolean equalsMethod(final Object[] args) throws Exception {
+        if (!(args[0] instanceof Rule)) {
+            return false;
+        }
+        Rule otherRule = (Rule) args[0];
         int otherPriority = otherRule.getPriority();
-        String name = getRuleName();
         int priority = getRulePriority();
+        if (priority != otherPriority) {
+            return false;
+        }
+        String otherName = otherRule.getName();
+        String name = getRuleName();
+        if (!name.equals(otherName)) {
+            return false;
+        }
+        String otherDescription = otherRule.getDescription();
+        String description =  getRuleDescription();
+        return !(description != null ? !description.equals(otherDescription) : otherDescription != null);
+    }
 
+    private int hashCodeMethod() throws Exception {
+        int result   = getRuleName().hashCode();
+        int priority = getRulePriority();
+        String description = getRuleDescription();
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + priority;
+        return result;
+    }
+
+    private String toStringMethod(){
+       return getRuleName();
+    }
+
+    private int compareTo(final Rule otherRule) throws Exception {
+        int otherPriority = otherRule.getPriority();
+        int priority = getRulePriority();
         if (priority < otherPriority) {
             return -1;
         } else if (priority > otherPriority) {
             return 1;
         } else {
+            String otherName = otherRule.getName();
+            String name = getRuleName();
             return name.compareTo(otherName);
         }
     }
@@ -164,7 +210,7 @@ public class RuleProxy implements InvocationHandler {
         Method[] methods = getMethods();
         for (Method method : methods) {
             if (method.isAnnotationPresent(Priority.class)) {
-                priority = (Integer) method.invoke(target);
+                priority = (int) method.invoke(target);
                 break;
             }
         }

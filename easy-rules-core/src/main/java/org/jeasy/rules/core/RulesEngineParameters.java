@@ -24,28 +24,21 @@
 package org.jeasy.rules.core;
 
 /**
- * Parameters of the rules engine.
- * 
+ * Parameters of a rules engine.
+ *
+ * <ul>
+ *     <li>When parameters are used with a {@link DefaultRulesEngine}, they are applied on <strong>all registered rules</strong>.</li>
+ *     <li>When parameters are used with a {@link InferenceRulesEngine}, they are applied on <strong>candidate rules in each iteration</strong>.</li>
+ * </ul>
+ *
  * @author Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  */
 public class RulesEngineParameters {
 
     /**
-     * Default engine name.
-     */
-    @Deprecated
-    public static String DEFAULT_NAME = "engine";
-
-    /**
      * Default rule priority threshold.
      */
-    public static int DEFAULT_RULE_PRIORITY_THRESHOLD = Integer.MAX_VALUE;
-
-    /**
-     * The engine name.
-     */
-    @Deprecated
-    protected String name;
+    public static final int DEFAULT_RULE_PRIORITY_THRESHOLD = Integer.MAX_VALUE;
     
     /**
      * Parameter to skip next applicable rules when a rule is applied.
@@ -68,70 +61,126 @@ public class RulesEngineParameters {
     private int priorityThreshold;
 
     /**
-     * Parameter to mute loggers.
+     * Create a new {@link RulesEngineParameters} with default values.
      */
-    private boolean silentMode;
-
     public RulesEngineParameters() {
-        this.name = RulesEngineParameters.DEFAULT_NAME;
         this.priorityThreshold = RulesEngineParameters.DEFAULT_RULE_PRIORITY_THRESHOLD;
     }
 
-    public RulesEngineParameters(String name, boolean skipOnFirstAppliedRule, boolean skipOnFirstFailedRule, int priorityThreshold, boolean silentMode) {
-        this.name = name;
+    /**
+     * Create a new {@link RulesEngineParameters}
+     * @deprecated Use {@link RulesEngineParameters#RulesEngineParameters(boolean, boolean, boolean, int)} instead.
+     * <strong>This constructor will be removed in v3.2</strong>
+     */
+    @Deprecated
+    public RulesEngineParameters(final boolean skipOnFirstAppliedRule, final boolean skipOnFirstFailedRule, final int priorityThreshold, final boolean silentMode) {
         this.skipOnFirstAppliedRule = skipOnFirstAppliedRule;
         this.skipOnFirstFailedRule = skipOnFirstFailedRule;
         this.priorityThreshold = priorityThreshold;
-        this.silentMode = silentMode;
     }
 
+    /**
+     * Create a new {@link RulesEngineParameters}.
+     * @deprecated Use {@link RulesEngineParameters#RulesEngineParameters(boolean, boolean, boolean, int)} instead.
+     * <strong>This constructor will be removed in v3.2</strong>
+     */
     @Deprecated
-    public String getName() {
-        return name;
+    public RulesEngineParameters(final boolean skipOnFirstAppliedRule, final boolean skipOnFirstFailedRule, final boolean skipOnFirstNonTriggeredRule, final int priorityThreshold, final boolean silentMode) {
+        this(skipOnFirstAppliedRule, skipOnFirstFailedRule, skipOnFirstNonTriggeredRule, priorityThreshold);
     }
 
-    @Deprecated
-    public void setName(String name) {
-        this.name = name;
+    /**
+     * Create a new {@link RulesEngineParameters}.
+     *
+     * @param skipOnFirstAppliedRule parameter to skip next applicable rules on first applied rule.
+     * @param skipOnFirstFailedRule parameter to skip next applicable rules on first failed rule.
+     * @param skipOnFirstNonTriggeredRule parameter to skip next applicable rules on first non triggered rule.
+     * @param priorityThreshold threshold after which rules should be skipped.
+     */
+    public RulesEngineParameters(final boolean skipOnFirstAppliedRule, final boolean skipOnFirstFailedRule, final boolean skipOnFirstNonTriggeredRule, final int priorityThreshold) {
+        this.skipOnFirstAppliedRule = skipOnFirstAppliedRule;
+        this.skipOnFirstFailedRule = skipOnFirstFailedRule;
+        this.skipOnFirstNonTriggeredRule = skipOnFirstNonTriggeredRule;
+        this.priorityThreshold = priorityThreshold;
     }
 
     public int getPriorityThreshold() {
         return priorityThreshold;
     }
 
-    public void setPriorityThreshold(int priorityThreshold) {
+    /**
+     * @deprecated Silent mode is now log implementation config. Now it uses slf4j facade
+     * <strong>This will be removed in v3.2</strong>
+     */
+    @Deprecated
+    public boolean isSilentMode() {
+        return false;
+    }
+
+    /**
+     * @deprecated Silent mode is now log implementation config. Now it uses slf4j facade
+     * <strong>This will be removed in v3.2</strong>
+     */
+    @Deprecated
+    public void setSilentMode(final boolean silentMode) {
+
+    }
+
+    public void setPriorityThreshold(final int priorityThreshold) {
         this.priorityThreshold = priorityThreshold;
     }
 
-    public boolean isSilentMode() {
-        return silentMode;
-    }
-
-    public void setSilentMode(boolean silentMode) {
-        this.silentMode = silentMode;
+    public RulesEngineParameters priorityThreshold(final int priorityThreshold) {
+        setPriorityThreshold(priorityThreshold);
+        return this;
     }
 
     public boolean isSkipOnFirstAppliedRule() {
         return skipOnFirstAppliedRule;
     }
 
-    public void setSkipOnFirstAppliedRule(boolean skipOnFirstAppliedRule) {
+    public void setSkipOnFirstAppliedRule(final boolean skipOnFirstAppliedRule) {
         this.skipOnFirstAppliedRule = skipOnFirstAppliedRule;
+    }
+
+    public RulesEngineParameters skipOnFirstAppliedRule(final boolean skipOnFirstAppliedRule) {
+        setSkipOnFirstAppliedRule(skipOnFirstAppliedRule);
+        return this;
     }
 
     public boolean isSkipOnFirstNonTriggeredRule() {
         return skipOnFirstNonTriggeredRule;
     }
 
-    public void setSkipOnFirstNonTriggeredRule(boolean skipOnFirstNonTriggeredRule) {
+    public void setSkipOnFirstNonTriggeredRule(final boolean skipOnFirstNonTriggeredRule) {
         this.skipOnFirstNonTriggeredRule = skipOnFirstNonTriggeredRule;
+    }
+
+    public RulesEngineParameters skipOnFirstNonTriggeredRule(final boolean skipOnFirstNonTriggeredRule) {
+        setSkipOnFirstNonTriggeredRule(skipOnFirstNonTriggeredRule);
+        return this;
     }
 
     public boolean isSkipOnFirstFailedRule() {
         return skipOnFirstFailedRule;
     }
 
-    public void setSkipOnFirstFailedRule(boolean skipOnFirstFailedRule) {
+    public void setSkipOnFirstFailedRule(final boolean skipOnFirstFailedRule) {
         this.skipOnFirstFailedRule = skipOnFirstFailedRule;
+    }
+
+    public RulesEngineParameters skipOnFirstFailedRule(final boolean skipOnFirstFailedRule) {
+        setSkipOnFirstFailedRule(skipOnFirstFailedRule);
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "Engine parameters { " +
+                "skipOnFirstAppliedRule = " + skipOnFirstAppliedRule +
+                ", skipOnFirstNonTriggeredRule = " + skipOnFirstNonTriggeredRule +
+                ", skipOnFirstFailedRule = " + skipOnFirstFailedRule +
+                ", priorityThreshold = " + priorityThreshold +
+                " }";
     }
 }

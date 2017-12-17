@@ -23,14 +23,14 @@
  */
 package org.jeasy.rules.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.jeasy.rules.api.RuleListener;
 import org.jeasy.rules.api.RulesEngine;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RulesEngineBuilderTest {
@@ -47,7 +47,6 @@ public class RulesEngineBuilderTest {
         assertThat(rulesEngine).isNotNull();
         RulesEngineParameters parameters = rulesEngine.getParameters();
 
-        assertThat(parameters.getName()).isEqualTo(RulesEngineParameters.DEFAULT_NAME);
         assertThat(parameters.getPriorityThreshold()).isEqualTo(RulesEngineParameters.DEFAULT_RULE_PRIORITY_THRESHOLD);
 
         assertThat(parameters.isSkipOnFirstAppliedRule()).isFalse();
@@ -63,10 +62,8 @@ public class RulesEngineBuilderTest {
 
         // When
         RulesEngine rulesEngine = RulesEngineBuilder.aNewRulesEngine()
-                .named(name)
                 .withRuleListener(ruleListener)
                 .withRulePriorityThreshold(expectedThreshold)
-                .withSilentMode(true)
                 .withSkipOnFirstNonTriggeredRule(true)
                 .withSkipOnFirstAppliedRule(true)
                 .withSkipOnFirstFailedRule(true)
@@ -75,11 +72,10 @@ public class RulesEngineBuilderTest {
         // Then
         assertThat(rulesEngine).isNotNull();
         RulesEngineParameters parameters = rulesEngine.getParameters();
-        assertThat(parameters.getName()).isEqualTo(name);
         assertThat(parameters.getPriorityThreshold()).isEqualTo(expectedThreshold);
-        assertThat(parameters.isSilentMode()).isTrue();
         assertThat(parameters.isSkipOnFirstAppliedRule()).isTrue();
         assertThat(parameters.isSkipOnFirstFailedRule()).isTrue();
         assertThat(parameters.isSkipOnFirstNonTriggeredRule()).isTrue();
+        assertThat(rulesEngine.getRuleListeners()).hasSize(2).contains(ruleListener);
     }
 }

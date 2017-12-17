@@ -30,11 +30,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Test class of rules priority comparison.
- *
- * @author Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
- */
 public class RulePriorityThresholdTest extends AbstractTest {
 
     @Before
@@ -44,9 +39,8 @@ public class RulePriorityThresholdTest extends AbstractTest {
         when(rule1.getPriority()).thenReturn(1);
         when(rule1.evaluate(facts)).thenReturn(true);
 
-        rulesEngine = RulesEngineBuilder.aNewRulesEngine()
-                .withRulePriorityThreshold(1)
-                .build();
+        RulesEngineParameters parameters = new RulesEngineParameters().priorityThreshold(1);
+        rulesEngine = new DefaultRulesEngine(parameters);
     }
 
     @Test

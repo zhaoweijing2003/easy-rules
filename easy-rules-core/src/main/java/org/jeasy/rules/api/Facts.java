@@ -37,50 +37,55 @@ public class Facts implements Iterable<Map.Entry<String, Object>> {
     private Map<String, Object> facts = new HashMap<>();
 
     /**
-     * Add a fact to the working memory.
-     * This will replace any fact having the same name.
-     *
-     * @param name fact name
-     * @param fact object
-     * @deprecated Use {@link Facts#put(java.lang.String, java.lang.Object)} instead. <strong>This will be removed in v3.0.0 final release</strong>
-     */
-    @Deprecated
-    public void add(String name, Object fact) {
-        Objects.requireNonNull(name);
-        facts.put(name, fact);
-    }
-
-    /**
      * Put a fact in the working memory.
      * This will replace any fact having the same name.
      *
      * @param name fact name
      * @param fact object to put in the working memory
+     * @return the previous value associated with <tt>name</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>name</tt>.
+     *         (A <tt>null</tt> return can also indicate that the map
+     *         previously associated <tt>null</tt> with <tt>name</tt>.)
      */
-    public void put(String name, Object fact) {
+    public Object put(String name, Object fact) {
         Objects.requireNonNull(name);
-        facts.put(name, fact);
+        return facts.put(name, fact);
     }
 
     /**
      * Remove fact.
      *
      * @param name of fact to remove
+     * @return the previous value associated with <tt>name</tt>, or
+     *         <tt>null</tt> if there was no mapping for <tt>name</tt>.
+     *         (A <tt>null</tt> return can also indicate that the map
+     *         previously associated <tt>null</tt> with <tt>name</tt>.)
      */
-    public void remove(String name) {
+    public Object remove(String name) {
         Objects.requireNonNull(name);
-        facts.remove(name);
+        return facts.remove(name);
     }
 
     /**
      * Get a fact by name.
      *
-     * @param name of fact to get.
+     * @param name of the fact
+     * @param <T> type of the fact
      * @return the fact having the given name, or null if there is no fact with the given name
      */
-    public Object get(String name) {
+    @SuppressWarnings("unchecked")
+    public <T> T get(String name) {
         Objects.requireNonNull(name);
-        return facts.get(name);
+        return (T) facts.get(name);
+    }
+
+    /**
+     * Return facts as a map.
+     *
+     * @return the current facts as a {@link HashMap}
+     */
+    public Map<String, Object> asMap() {
+        return facts;
     }
 
     @Override
@@ -90,12 +95,16 @@ public class Facts implements Iterable<Map.Entry<String, Object>> {
 
     @Override
     public String toString() {
-        StringBuilder stringBuilder = new StringBuilder("Facts {").append("\n");
-        for (Map.Entry<String, Object> fact : facts.entrySet()) {
-            stringBuilder.append(format("   Fact { %s : %s }", fact.getKey(), fact.getValue().toString()));
-            stringBuilder.append("\n");
+        StringBuilder stringBuilder = new StringBuilder("[");
+        List<Map.Entry<String, Object>> entries = new ArrayList<>(facts.entrySet());
+        for (int i = 0; i < entries.size(); i++) {
+            Map.Entry<String, Object> entry = entries.get(i);
+            stringBuilder.append(format(" { %s : %s } ", entry.getKey(), String.valueOf(entry.getValue())));
+            if (i < entries.size() - 1) {
+                stringBuilder.append(",");
+            }
         }
-        stringBuilder.append("}");
+        stringBuilder.append("]");
         return  stringBuilder.toString();
     }
 }

@@ -50,6 +50,13 @@ public interface RulesEngine {
     List<RuleListener> getRuleListeners();
 
     /**
+     * Return the list of registered rules engine listeners.
+     *
+     * @return the list of registered rules engine listeners
+     */
+    List<RulesEngineListener> getRulesEngineListeners();
+
+    /**
      * Fire all registered rules on given facts.
      */
     void fire(Rules rules, Facts facts);

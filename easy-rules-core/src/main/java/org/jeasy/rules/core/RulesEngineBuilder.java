@@ -25,6 +25,7 @@ package org.jeasy.rules.core;
 
 import org.jeasy.rules.api.RuleListener;
 import org.jeasy.rules.api.RulesEngine;
+import org.jeasy.rules.api.RulesEngineListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,13 +33,17 @@ import java.util.List;
 /**
  * Builder for rules engine instances.
  *
+ * @deprecated This builder will be removed in v3.2
+ *
  * @author Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  */
+@Deprecated
 public class RulesEngineBuilder {
 
-    private RulesEngineParameters parameters;
+    private final RulesEngineParameters parameters;
 
-    private List<RuleListener> ruleListeners;
+    private final List<RuleListener> ruleListeners;
+    private final List<RulesEngineListener> rulesEngineListeners;
 
     /**
      * Create a new rules engine builder.
@@ -50,14 +55,9 @@ public class RulesEngineBuilder {
     }
 
     private RulesEngineBuilder() {
-        parameters = new RulesEngineParameters(RulesEngineParameters.DEFAULT_NAME, false, false, RulesEngineParameters.DEFAULT_RULE_PRIORITY_THRESHOLD, false);
+        parameters = new RulesEngineParameters(false, false, false, RulesEngineParameters.DEFAULT_RULE_PRIORITY_THRESHOLD);
         ruleListeners = new ArrayList<>();
-    }
-
-    @Deprecated
-    public RulesEngineBuilder named(final String name) {
-        parameters.setName(name);
-        return this;
+        rulesEngineListeners = new ArrayList<>();
     }
 
     /**
@@ -116,13 +116,22 @@ public class RulesEngineBuilder {
     }
 
     /**
-     * Set silent mode to mute all loggers.
+     * Register a rules engine listener.
      *
-     * @param silentMode to set
+     * @param rulesEngineListener to register
      * @return the rules engine builder
      */
+    public RulesEngineBuilder withRulesEngineListener(final RulesEngineListener rulesEngineListener) {
+        this.rulesEngineListeners.add(rulesEngineListener);
+        return this;
+    }
+
+    /**
+     * @deprecated Silent mode is now log implementation config. Now it uses slf4j facade
+     * <strong>This will be removed in v3.2</strong>
+     */
+    @Deprecated
     public RulesEngineBuilder withSilentMode(final boolean silentMode) {
-        parameters.setSilentMode(silentMode);
         return this;
     }
 
@@ -132,7 +141,10 @@ public class RulesEngineBuilder {
      * @return a rules engine instance
      */
     public RulesEngine build() {
-        return new DefaultRulesEngine(parameters, ruleListeners);
+        DefaultRulesEngine defaultRulesEngine = new DefaultRulesEngine(parameters);
+        defaultRulesEngine.registerRuleListeners(ruleListeners);
+        defaultRulesEngine.registerRulesEngineListeners(rulesEngineListeners);
+        return defaultRulesEngine;
     }
 
 }

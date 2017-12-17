@@ -21,28 +21,32 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package org.jeasy.rules.tutorials.shop;
+package org.jeasy.rules.api;
 
-import org.jeasy.rules.api.Facts;
-import org.jeasy.rules.core.BasicRule;
+import org.jeasy.rules.core.InferenceRulesEngine;
 
-public class AlcoholRule extends BasicRule {
+/**
+ * A listener for rules engine execution events.
+ *
+ * @author Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+ */
+public interface RulesEngineListener {
 
-    public AlcoholRule() {
-        super("AlcoholRule", "Children are not allowed to buy alcohol", 2);
-    }
+    /**
+     * Triggered before evaluating the rule set.
+     * <strong>When this listener is used with a {@link InferenceRulesEngine}, this method will be triggered before the evaluation of each candidate rule set in each iteration.</strong>
+     *
+     * @param rules to fire
+     * @param facts present before firing rules
+     */
+    void beforeEvaluate(Rules rules, Facts facts);
 
-    @Override
-    public boolean evaluate(Facts facts) {
-        Person person = (Person) facts.get("person");
-        return !person.isAdult();
-    }
-
-    @Override
-    public void execute(Facts facts){
-        Person person = (Person) facts.get("person");
-        System.out.printf("Shop: Sorry %s, you are not allowed to buy alcohol", person.getName());
-        System.out.println();
-    }
-
+    /**
+     * Triggered after executing the rule set
+     * <strong>When this listener is used with a {@link InferenceRulesEngine}, this method will be triggered after the execution of each candidate rule set in each iteration.</strong>
+     *
+     * @param rules fired
+     * @param facts present after firing rules
+     */
+    void afterExecute(Rules rules, Facts facts);
 }

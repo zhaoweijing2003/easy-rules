@@ -23,13 +23,18 @@
  */
 package org.jeasy.rules.core;
 
-import org.jeasy.rules.api.*;
-
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import static java.lang.String.format;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.jeasy.rules.api.Facts;
+import org.jeasy.rules.api.Rule;
+import org.jeasy.rules.api.RuleListener;
+import org.jeasy.rules.api.RulesEngineListener;
+import org.jeasy.rules.api.Rules;
+import org.jeasy.rules.api.RulesEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default {@link RulesEngine} implementation.
@@ -42,31 +47,30 @@ import static java.lang.String.format;
  */
 public final class DefaultRulesEngine implements RulesEngine {
 
-    private static final Logger LOGGER = Logger.getLogger(RulesEngine.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultRuleListener.class);
 
-    /**
-     * The engine parameters
-     */
     private RulesEngineParameters parameters;
+    private List<RuleListener> ruleListeners;
+    private List<RulesEngineListener> rulesEngineListeners;
 
     /**
-     * The registered rule listeners.
+     * Create a new {@link DefaultRulesEngine} with default parameters.
      */
-    private List<RuleListener> ruleListeners;
-
     public DefaultRulesEngine() {
-        this.parameters = new RulesEngineParameters();
-        this.ruleListeners = new ArrayList<>();
-        this.ruleListeners.add(new DefaultRuleListener());
+        this(new RulesEngineParameters());
     }
 
-    DefaultRulesEngine(final RulesEngineParameters parameters, final List<RuleListener> ruleListeners) {
+    /**
+     * Create a new {@link DefaultRulesEngine}.
+     *
+     * @param parameters of the engine
+     */
+    public DefaultRulesEngine(final RulesEngineParameters parameters) {
         this.parameters = parameters;
-        this.ruleListeners = ruleListeners;
+        this.ruleListeners = new ArrayList<>();
         this.ruleListeners.add(new DefaultRuleListener());
-        if (parameters.isSilentMode()) {
-            Utils.muteLoggers();
-        }
+        this.rulesEngineListeners = new ArrayList<>();
+        this.rulesEngineListeners.add(new DefaultRulesEngineListener(parameters));
     }
 
     @Override
@@ -80,48 +84,29 @@ public final class DefaultRulesEngine implements RulesEngine {
     }
 
     @Override
-    public void fire(Rules rules, Facts facts) {
-        if (rules.isEmpty()) {
-            LOGGER.warning("No rules registered! Nothing to apply");
-            return;
-        }
-        sort(rules);
-        logEngineParameters();
-        log(rules);
-        log(facts);
-        apply(rules, facts);
+    public List<RulesEngineListener> getRulesEngineListeners() {
+        return rulesEngineListeners;
     }
 
     @Override
-    public Map<Rule, Boolean> check(Rules rules, Facts facts) {
-        LOGGER.info("Checking rules");
-        sort(rules);
-        Map<Rule, Boolean> result = new HashMap<>();
-        for (Rule rule : rules) {
-            if (shouldBeEvaluated(rule, facts)) {
-                result.put(rule, rule.evaluate(facts));
-            }
-        }
-        return result;
+    public void fire(Rules rules, Facts facts) {
+        triggerListenersBeforeRules(rules, facts);
+        doFire(rules, facts);
+        triggerListenersAfterRules(rules, facts);
     }
 
-    private void sort(Rules rules) {
-        rules.sort();
-    }
-
-    private void apply(Rules rules, Facts facts) {
-        LOGGER.info("Rules evaluation started");
+    void doFire(Rules rules, Facts facts) {
         for (Rule rule : rules) {
             final String name = rule.getName();
             final int priority = rule.getPriority();
             if (priority > parameters.getPriorityThreshold()) {
-                LOGGER.log(Level.INFO,
-                        "Rule priority threshold ({0}) exceeded at rule ''{1}'' with priority={2}, next rules will be skipped",
-                        new Object[]{parameters.getPriorityThreshold(), name, priority});
+                LOGGER.info("Rule priority threshold ({}) exceeded at rule '{}' with priority={}, next rules will be skipped",
+                        parameters.getPriorityThreshold(), name, priority);
                 break;
             }
             if (!shouldBeEvaluated(rule, facts)) {
-                LOGGER.log(Level.INFO, "Rule ''{0}'' has been skipped before being evaluated", name);
+                LOGGER.info("Rule '{}' has been skipped before being evaluated",
+                    name);
                 continue;
             }
             if (rule.evaluate(facts)) {
@@ -149,6 +134,25 @@ public final class DefaultRulesEngine implements RulesEngine {
                 }
             }
         }
+    }
+
+    @Override
+    public Map<Rule, Boolean> check(Rules rules, Facts facts) {
+        triggerListenersBeforeRules(rules, facts);
+        Map<Rule, Boolean> result = doCheck(rules, facts);
+        triggerListenersAfterRules(rules, facts);
+        return result;
+    }
+
+    private Map<Rule, Boolean> doCheck(Rules rules, Facts facts) {
+        LOGGER.info("Checking rules");
+        Map<Rule, Boolean> result = new HashMap<>();
+        for (Rule rule : rules) {
+            if (shouldBeEvaluated(rule, facts)) {
+                result.put(rule, rule.evaluate(facts));
+            }
+        }
+        return result;
     }
 
     private void triggerListenersOnFailure(final Rule rule, final Exception exception, Facts facts) {
@@ -184,33 +188,51 @@ public final class DefaultRulesEngine implements RulesEngine {
         }
     }
 
+    private void triggerListenersBeforeRules(Rules rule, Facts facts) {
+        for (RulesEngineListener rulesEngineListener : rulesEngineListeners) {
+            rulesEngineListener.beforeEvaluate(rule, facts);
+        }
+    }
+
+    private void triggerListenersAfterRules(Rules rule, Facts facts) {
+        for (RulesEngineListener rulesEngineListener : rulesEngineListeners) {
+            rulesEngineListener.afterExecute(rule, facts);
+        }
+    }
+
     private boolean shouldBeEvaluated(Rule rule, Facts facts) {
         return triggerListenersBeforeEvaluate(rule, facts);
     }
 
-    private void logEngineParameters() {
-        LOGGER.log(Level.INFO, "Rule priority threshold: {0}", parameters.getPriorityThreshold());
-        LOGGER.log(Level.INFO, "Skip on first applied rule: {0}", parameters.isSkipOnFirstAppliedRule());
-        LOGGER.log(Level.INFO, "Skip on first non triggered rule: {0}", parameters.isSkipOnFirstNonTriggeredRule());
-        LOGGER.log(Level.INFO, "Skip on first failed rule: {0}", parameters.isSkipOnFirstFailedRule());
+    /**
+     * Register a rule listener.
+     * @param ruleListener to register
+     */
+    public void registerRuleListener(RuleListener ruleListener) {
+        ruleListeners.add(ruleListener);
     }
 
-    private void log(Rules rules) {
-        LOGGER.log(Level.INFO, "Registered rules:");
-        for (Rule rule : rules) {
-            LOGGER.log(Level.INFO, format("Rule { name = '%s', description = '%s', priority = '%s'}",
-                    rule.getName(), rule.getDescription(), rule.getPriority()));
-        }
+    /**
+     * Register a list of rule listener.
+     * @param ruleListeners to register
+     */
+    public void registerRuleListeners(List<RuleListener> ruleListeners) {
+        this.ruleListeners.addAll(ruleListeners);
     }
 
-    private void log(Facts facts) {
-        LOGGER.log(Level.INFO, "Known facts:");
-        for (Map.Entry<String, Object> fact : facts) {
-            LOGGER.log(Level.INFO, format("Fact { %s : %s }",
-                    fact.getKey(),
-                    fact.getValue() == null ? "null" : fact.getValue().toString())
-            );
-        }
+    /**
+     * Register a rules engine listener.
+     * @param rulesEngineListener to register
+     */
+    public void registerRulesEngineListener(RulesEngineListener rulesEngineListener) {
+        rulesEngineListeners.add(rulesEngineListener);
     }
 
+    /**
+     * Register a list of rules engine listener.
+     * @param rulesEngineListeners to register
+     */
+    public void registerRulesEngineListeners(List<RulesEngineListener> rulesEngineListeners) {
+        this.rulesEngineListeners.addAll(rulesEngineListeners);
+    }
 }

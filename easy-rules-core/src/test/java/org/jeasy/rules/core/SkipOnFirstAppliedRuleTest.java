@@ -26,22 +26,15 @@ package org.jeasy.rules.core;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.jeasy.rules.core.RulesEngineBuilder.aNewRulesEngine;
 import static org.mockito.Mockito.*;
 
-/**
- * Test class of "skip on first applied rule" parameter of Easy Rules default engine.
- *
- * @author Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
- */
 public class SkipOnFirstAppliedRuleTest extends AbstractTest {
 
     @Before
     public void setup() throws Exception {
         super.setup();
-        rulesEngine = aNewRulesEngine()
-                .withSkipOnFirstAppliedRule(true)
-                .build();
+        RulesEngineParameters parameters = new RulesEngineParameters().skipOnFirstAppliedRule(true);
+        rulesEngine = new DefaultRulesEngine(parameters);
     }
 
     @Test

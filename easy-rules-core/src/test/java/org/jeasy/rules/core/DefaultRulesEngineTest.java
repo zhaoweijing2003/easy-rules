@@ -23,32 +23,34 @@
  */
 package org.jeasy.rules.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.jeasy.rules.annotation.Action;
 import org.jeasy.rules.annotation.Condition;
 import org.jeasy.rules.annotation.Priority;
-import org.jeasy.rules.api.Facts;
 import org.jeasy.rules.api.RuleListener;
+import org.jeasy.rules.api.RulesEngineListener;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.*;
+import org.mockito.InOrder;
+import org.mockito.Mock;
 
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
-
-/**
- * Test class for {@link DefaultRulesEngine}.
- *
- * @author Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
- */
 public class DefaultRulesEngineTest extends AbstractTest {
 
     @Mock
     private RuleListener ruleListener;
+
+    @Mock
+    private RulesEngineListener rulesEngineListener;
 
     private AnnotatedRule annotatedRule;
 
@@ -56,7 +58,6 @@ public class DefaultRulesEngineTest extends AbstractTest {
     public void setup() throws Exception {
         super.setup();
         when(rule1.getName()).thenReturn("r");
-        when(rule1.getDescription()).thenReturn("d");
         when(rule1.getPriority()).thenReturn(1);
         annotatedRule = new AnnotatedRule();
     }
@@ -184,9 +185,8 @@ public class DefaultRulesEngineTest extends AbstractTest {
         // Given
         when(rule1.evaluate(facts)).thenReturn(true);
         when(ruleListener.beforeEvaluate(rule1, facts)).thenReturn(true);
-        rulesEngine = RulesEngineBuilder.aNewRulesEngine()
-                .withRuleListener(ruleListener)
-                .build();
+        DefaultRulesEngine rulesEngine = new DefaultRulesEngine();
+        rulesEngine.registerRuleListener(ruleListener);
         rules.register(rule1);
 
         // When
@@ -214,11 +214,28 @@ public class DefaultRulesEngineTest extends AbstractTest {
 
     @Test
     public void testGetRuleListeners() throws Exception {
-        rulesEngine = RulesEngineBuilder.aNewRulesEngine()
-                .withRuleListener(ruleListener)
-                .build();
+        // Given
+        DefaultRulesEngine rulesEngine = new DefaultRulesEngine();
+        rulesEngine.registerRuleListener(ruleListener);
 
-        assertThat(rulesEngine.getRuleListeners()).contains(ruleListener);
+        // When
+        List<RuleListener> ruleListeners = rulesEngine.getRuleListeners();
+
+        // Then
+        assertThat(ruleListeners).contains(ruleListener);
+    }
+
+    @Test
+    public void testGetRulesEngineListeners() throws Exception {
+        // Given
+        DefaultRulesEngine rulesEngine = new DefaultRulesEngine();
+        rulesEngine.registerRulesEngineListener(rulesEngineListener);
+
+        // When
+        List<RulesEngineListener> rulesEngineListeners = rulesEngine.getRulesEngineListeners();
+
+        // Then
+        assertThat(rulesEngineListeners).contains(rulesEngineListener);
     }
 
     @After

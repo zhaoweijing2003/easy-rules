@@ -10,13 +10,14 @@
 
     <groupId>org.jeasy</groupId>
     <artifactId>easy-rules</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.1.1-SNAPSHOT</version>
 
     <modules>
         <module>easy-rules-archetype</module>
         <module>easy-rules-core</module>
         <module>easy-rules-tutorials</module>
-  </modules>
+        <module>easy-rules-mvel</module>
+    </modules>
 
     <packaging>pom</packaging>
 
@@ -30,6 +31,7 @@
         <junit.version>4.12</junit.version>
         <assertj.version>2.6.0</assertj.version>
         <mockito.version>2.7.1</mockito.version>
+        <slf4j-api.version>1.7.25</slf4j-api.version>
         <maven-cobertura-plugin.version>2.7</maven-cobertura-plugin.version>
         <maven-coveralls-plugin.version>4.3.0</maven-coveralls-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
@@ -37,6 +39,7 @@
         <maven-surefire-plugin.version>2.19.1</maven-surefire-plugin.version>
         <maven-javadoc-plugin.version>2.10.4</maven-javadoc-plugin.version>
         <maven-license-plugin.version>3.0</maven-license-plugin.version>
+        <maven-enforcer-plugin.version>1.4.1</maven-enforcer-plugin.version>
     </properties>
 
     <scm>
@@ -81,6 +84,12 @@
                 <groupId>org.easyrules</groupId>
                 <artifactId>easyrules-core</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j-api.version}</version>
             </dependency>
 
             <dependency>
@@ -167,6 +176,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>enforce-dependency-convergence</id>
