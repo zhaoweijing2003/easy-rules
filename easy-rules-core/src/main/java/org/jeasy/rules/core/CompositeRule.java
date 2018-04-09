@@ -1,7 +1,7 @@
 /**
  * The MIT License
  *
- *  Copyright (c) 2017, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+ *  Copyright (c) 2018, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -37,8 +37,11 @@ import java.util.TreeSet;
  * A composite rule is triggered if <strong>ALL</strong> conditions of its composing rules are satisfied.
  * When a composite rule is applied, actions of <strong>ALL</strong> composing rules are performed.
  *
+ * @deprecated use <code>UnitRuleGroup</code> instead. This class is deprecated in v3.2 and will be removed in v3.3 .
+ *
  * @author Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  */
+@Deprecated
 public class CompositeRule extends BasicRule {
 
     /**

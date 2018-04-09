@@ -1,7 +1,7 @@
 /**
  * The MIT License
  *
- *  Copyright (c) 2017, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+ *  Copyright (c) 2018, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -47,5 +47,11 @@ public @interface Rule {
      * @return The rule description
      */
     String description() default  org.jeasy.rules.api.Rule.DEFAULT_DESCRIPTION;
+
+    /**
+     * The rule priority.
+     * @return The rule priority
+     */
+    int priority() default org.jeasy.rules.api.Rule.DEFAULT_PRIORITY;
 
 }

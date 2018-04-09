@@ -1,7 +1,7 @@
 /**
  * The MIT License
  *
- *  Copyright (c) 2017, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+ *  Copyright (c) 2018, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,12 @@
  */
 package org.jeasy.rules.mvel;
 
+import org.jeasy.rules.api.Rules;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.Reader;
+import java.util.List;
 
 /**
  * Factory to create {@link MVELRule} instances.
@@ -41,10 +45,38 @@ public class MVELRuleFactory {
      * @param ruleDescriptor in yaml format
      * @return a new rule
      * @throws FileNotFoundException if the rule descriptor cannot be found
+     *
+     * @deprecated use {@link MVELRuleFactory#createRuleFrom(java.io.Reader)} instead. This method will be removed in v3.3
      */
+    @Deprecated
     public static MVELRule createRuleFrom(File ruleDescriptor) throws FileNotFoundException {
         MVELRuleDefinition ruleDefinition = reader.read(ruleDescriptor);
         return ruleDefinition.create();
     }
 
+    /**
+     * Create a new {@link MVELRule} from a Reader.
+     *
+     * @param ruleDescriptor as a Reader
+     * @return a new rule
+     */
+    public static MVELRule createRuleFrom(Reader ruleDescriptor) {
+        MVELRuleDefinition ruleDefinition = reader.read(ruleDescriptor);
+        return ruleDefinition.create();
+    }
+
+    /**
+     * Create a set of {@link MVELRule} from a Reader.
+     *
+     * @param rulesDescriptor as a Reader
+     * @return a set of rules
+     */
+    public static Rules createRulesFrom(Reader rulesDescriptor) {
+        Rules rules = new Rules();
+        List<MVELRuleDefinition> ruleDefinition = reader.readAll(rulesDescriptor);
+        for (MVELRuleDefinition mvelRuleDefinition : ruleDefinition) {
+            rules.register(mvelRuleDefinition.create());
+        }
+        return rules;
+    }
 }

@@ -1,7 +1,7 @@
 /**
  * The MIT License
  *
- *  Copyright (c) 2017, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+ *  Copyright (c) 2018, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -74,6 +74,18 @@ public class RulesTest {
         ruleSet.add(r1);
         ruleSet.add(r2);
 
+        rules = new Rules(ruleSet);
+        rules.unregister("rule2");
+
+        assertThat(rules).hasSize(1).containsExactly(r1);
+    }
+    
+    @Test
+    public void unregisterByNameNonExistingRule() throws Exception {
+        Rule r1 = new BasicRule("rule1");
+        Set<Rule> ruleSet = new HashSet<>();
+        ruleSet.add(r1);
+        
         rules = new Rules(ruleSet);
         rules.unregister("rule2");
 

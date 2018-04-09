@@ -1,7 +1,7 @@
 /**
  * The MIT License
  *
- *  Copyright (c) 2017, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+ *  Copyright (c) 2018, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -146,7 +146,7 @@ public class RuleProxy implements InvocationHandler {
             if (annotations.length == 1) {
                 String factName = ((Fact) (annotations[0])).value(); //validated upfront.
                 Object fact = facts.get(factName);
-                if (fact == null) {
+                if (fact == null && !facts.asMap().containsKey(factName)) {
                     throw new NoSuchFactException(format("No fact named '%s' found in known facts: \n%s", factName, facts), factName);
                 }
                 actualParameters.add(fact);
@@ -186,7 +186,13 @@ public class RuleProxy implements InvocationHandler {
         return result;
     }
 
-    private String toStringMethod(){
+    private String toStringMethod() throws Exception {
+        Method[] methods = getMethods();
+        for (Method method : methods) {
+            if ("toString".equals(method.getName())) {
+                return (String) method.invoke(target);
+            }
+        }
        return getRuleName();
     }
 
@@ -206,6 +212,11 @@ public class RuleProxy implements InvocationHandler {
 
     private int getRulePriority() throws Exception {
         int priority = Rule.DEFAULT_PRIORITY;
+
+        org.jeasy.rules.annotation.Rule rule = getRuleAnnotation();
+        if (rule.priority() != Rule.DEFAULT_PRIORITY) {
+            priority = rule.priority();
+        }
 
         Method[] methods = getMethods();
         for (Method method : methods) {

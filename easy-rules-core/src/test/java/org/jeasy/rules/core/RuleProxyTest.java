@@ -1,7 +1,7 @@
 /**
  * The MIT License
  *
- *  Copyright (c) 2017, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+ *  Copyright (c) 2018, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ package org.jeasy.rules.core;
 import org.jeasy.rules.annotation.Action;
 import org.jeasy.rules.annotation.AnnotatedRuleWithMetaRuleAnnotation;
 import org.jeasy.rules.annotation.Condition;
+import org.jeasy.rules.annotation.Priority;
 import org.jeasy.rules.api.Rule;
 import org.junit.Test;
 
@@ -117,7 +118,8 @@ public class RuleProxyTest {
         assertNotEquals(proxy2, null);
         assertNotEquals(proxy3, null);
     }
-
+    
+    
     @Test
     public void invokeHashCode() {
 
@@ -139,6 +141,94 @@ public class RuleProxyTest {
         assertNotEquals(rule, proxy1);
         assertNotEquals(rule.hashCode(), proxy1.hashCode());
     }
+    
+    @Test
+    public void invokeToString() {
+
+        Object rule = new DummyRule();
+        Rule proxy1 = RuleProxy.asRule(rule);
+        Rule proxy2 = RuleProxy.asRule(proxy1);
+        
+        assertEquals(proxy1.toString(), proxy1.toString());
+                
+        assertEquals(proxy1.toString(), proxy2.toString());
+        
+        assertEquals(rule.toString(), proxy1.toString());
+    }
+
+    @Test
+    public void testPriorityFromAnnotation() {
+
+        @org.jeasy.rules.annotation.Rule(priority = 1)
+        class MyRule {
+            @Condition
+            public boolean when() { return true; }
+
+            @Action
+            public void then() { }
+        }
+
+        Object rule = new MyRule();
+        Rule proxy = RuleProxy.asRule(rule);
+        assertEquals(1, proxy.getPriority());
+    }
+
+    @Test
+    public void testPriorityFromMethod() {
+
+        @org.jeasy.rules.annotation.Rule
+        class MyRule {
+            @Condition
+            public boolean when() { return true; }
+
+            @Action
+            public void then() { }
+
+            @Priority
+            public int getPriority() { return 2; }
+        }
+
+        Object rule = new MyRule();
+        Rule proxy = RuleProxy.asRule(rule);
+        assertEquals(2, proxy.getPriority());
+    }
+
+    @Test
+    public void testPriorityPrecedence() {
+
+        @org.jeasy.rules.annotation.Rule(priority = 1)
+        class MyRule {
+            @Condition
+            public boolean when() { return true; }
+
+            @Action
+            public void then() { }
+
+            @Priority
+            public int getPriority() { return 2; }
+        }
+
+        Object rule = new MyRule();
+        Rule proxy = RuleProxy.asRule(rule);
+        assertEquals(2, proxy.getPriority());
+    }
+
+    @Test
+    public void testDefaultPriority() {
+
+        @org.jeasy.rules.annotation.Rule
+        class MyRule {
+            @Condition
+            public boolean when() { return true; }
+
+            @Action
+            public void then() { }
+        }
+
+        Object rule = new MyRule();
+        Rule proxy = RuleProxy.asRule(rule);
+        assertEquals(Rule.DEFAULT_PRIORITY, proxy.getPriority());
+    }
 
     @org.jeasy.rules.annotation.Rule
     class DummyRule {
@@ -147,6 +237,12 @@ public class RuleProxyTest {
 
         @Action
         public void then() { }
+        
+        @Override
+        public String toString() {
+        	return "I am a Dummy rule";
+        }
+        
     }
-}
 
+}
