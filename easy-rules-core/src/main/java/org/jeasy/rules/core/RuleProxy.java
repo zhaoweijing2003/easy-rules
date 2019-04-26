@@ -1,7 +1,7 @@
 /**
  * The MIT License
  *
- *  Copyright (c) 2018, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+ *  Copyright (c) 2019, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -112,7 +112,7 @@ public class RuleProxy implements InvocationHandler {
             List<Object> actualParameters = getActualParameters(conditionMethod, facts);
             return conditionMethod.invoke(target, actualParameters.toArray()); // validated upfront
         } catch (NoSuchFactException e) {
-            LOGGER.info("Rule '{}' has been evaluated to false due to a declared but missing fact '{}' in {}",
+            LOGGER.error("Rule '{}' has been evaluated to false due to a declared but missing fact '{}' in {}",
                     getTargetClass().getName(), e.getMissingFact(), facts);
             return false;
         } catch (IllegalArgumentException e) {
@@ -147,7 +147,7 @@ public class RuleProxy implements InvocationHandler {
                 String factName = ((Fact) (annotations[0])).value(); //validated upfront.
                 Object fact = facts.get(factName);
                 if (fact == null && !facts.asMap().containsKey(factName)) {
-                    throw new NoSuchFactException(format("No fact named '%s' found in known facts: \n%s", factName, facts), factName);
+                    throw new NoSuchFactException(format("No fact named '%s' found in known facts: %n%s", factName, facts), factName);
                 }
                 actualParameters.add(fact);
             } else {

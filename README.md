@@ -96,7 +96,7 @@ actions:
 ```
 
 ```java
-Rule weatherRule = MVELRuleFactory.createRuleFrom(new File("weather-rule.yml"));
+Rule weatherRule = MVELRuleFactory.createRuleFrom(new FileReader("weather-rule.yml"));
 ```
 
 ### 2. Then, fire it!
@@ -143,16 +143,22 @@ For any further question, you can use the [Gitter](https://gitter.im/j-easy/easy
 * [gs-spadmanabhan](https://github.com/gs-spadmanabhan)
 * [JurMarky](https://github.com/JurMarky)
 * [jordanjennings](https://github.com/jordanjennings)
+* [kayeight](https://github.com/kayeight)
 * [khandelwalankit](https://github.com/khandelwalankit)
+* [lranasingha](https://github.com/lranasingha)
 * [mrcritical](https://github.com/mrcritical)
+* [paulbrejla](https://github.com/paulbrejla)
 * [richdouglasevans](https://github.com/richdouglasevans)
+* [ruanjiehui](https://github.com/ruanjiehui)
 * [spearway](https://github.com/spearway)
 * [toudidel](https://github.com/toudidel)
 * [vinoct6](https://github.com/vinoct6)
 * [wg1j](https://github.com/wg1j)
 * [will-gilbert](https://github.com/will-gilbert)
+* [WayneCui](https://github.com/WayneCui)
 * [sanmibuh](https://github.com/sanmibuh)
-* [shivmitra](https://github.com/sanmibuh)
+* [shivmitra](https://github.com/shivmitra)
+* [zhhaojie](https://github.com/zhhaojie)
 
 Thank you all for your contributions!
 
@@ -175,7 +181,7 @@ Easy Rules is released under the terms of the MIT license:
 ```
 The MIT License (MIT)
 
-Copyright (c) 2018 Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+Copyright (c) 2019 Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

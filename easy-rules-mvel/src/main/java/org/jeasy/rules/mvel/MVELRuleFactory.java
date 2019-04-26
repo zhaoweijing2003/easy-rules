@@ -1,7 +1,7 @@
 /**
  * The MIT License
  *
- *  Copyright (c) 2018, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+ *  Copyright (c) 2019, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,13 @@
  */
 package org.jeasy.rules.mvel;
 
+import org.jeasy.rules.api.Rule;
 import org.jeasy.rules.api.Rules;
+import org.jeasy.rules.support.*;
+import org.mvel2.ParserContext;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -37,21 +39,26 @@ import java.util.List;
  */
 public class MVELRuleFactory {
 
-    private static MVELRuleDefinitionReader reader = new MVELRuleDefinitionReader();
+    // for backward compatibility only, will be removed in v3.4
+    private static final RuleDefinitionReader READER = new YamlRuleDefinitionReader();
+
+    private RuleDefinitionReader reader;
+
+    private static final List<String> ALLOWED_COMPOSITE_RULE_TYPES = Arrays.asList(
+            UnitRuleGroup.class.getSimpleName(),
+            ConditionalRuleGroup.class.getSimpleName(),
+            ActivationRuleGroup.class.getSimpleName()
+    );
 
     /**
-     * Create a new {@link MVELRule} from a rule descriptor.
+     * Create a new {@link MVELRuleFactory} with a given reader.
      *
-     * @param ruleDescriptor in yaml format
-     * @return a new rule
-     * @throws FileNotFoundException if the rule descriptor cannot be found
-     *
-     * @deprecated use {@link MVELRuleFactory#createRuleFrom(java.io.Reader)} instead. This method will be removed in v3.3
+     * @param reader to use to read rule definitions
+     * @see YamlRuleDefinitionReader
+     * @see JsonRuleDefinitionReader
      */
-    @Deprecated
-    public static MVELRule createRuleFrom(File ruleDescriptor) throws FileNotFoundException {
-        MVELRuleDefinition ruleDefinition = reader.read(ruleDescriptor);
-        return ruleDefinition.create();
+    public MVELRuleFactory(RuleDefinitionReader reader) {
+        this.reader = reader;
     }
 
     /**
@@ -60,9 +67,60 @@ public class MVELRuleFactory {
      * @param ruleDescriptor as a Reader
      * @return a new rule
      */
-    public static MVELRule createRuleFrom(Reader ruleDescriptor) {
-        MVELRuleDefinition ruleDefinition = reader.read(ruleDescriptor);
-        return ruleDefinition.create();
+    public Rule createRule(Reader ruleDescriptor) throws Exception {
+        return createRule(ruleDescriptor, new ParserContext());
+    }
+
+    /**
+     * Create a new {@link MVELRule} from a Reader.
+     *
+     * The rule descriptor should contain a single rule definition.
+     * If no rule definitions are found, a {@link IllegalArgumentException} will be thrown.
+     * If more than a rule is defined in the descriptor, the first rule will be returned.
+     *
+     * @param ruleDescriptor as a Reader
+     * @param parserContext the MVEL parser context
+     * @return a new rule
+     */
+    public Rule createRule(Reader ruleDescriptor, ParserContext parserContext) throws Exception {
+        List<RuleDefinition> ruleDefinitions = reader.read(ruleDescriptor);
+        if (ruleDefinitions.isEmpty()) {
+            throw new IllegalArgumentException("rule descriptor is empty");
+        }
+        return createRule(ruleDefinitions.get(0), parserContext);
+    }
+
+    /**
+     * Create a new {@link MVELRule} using a {@link YamlRuleDefinitionReader}.
+     *
+     * @param ruleDescriptor as a Reader
+     * @return a new rule
+     * @deprecated Use {@link MVELRuleFactory#createRule(java.io.Reader)} instead. This method will be removed in v3.4.
+     */
+    @Deprecated
+    public static Rule createRuleFrom(Reader ruleDescriptor) throws Exception {
+        return createRuleFrom(ruleDescriptor, new ParserContext());
+    }
+
+    /**
+     * Create a new {@link MVELRule} using a {@link YamlRuleDefinitionReader}.
+     *
+     * The rule descriptor should contain a single rule definition.
+     * If no rule definitions are found, a {@link IllegalArgumentException} will be thrown.
+     * If more than a rule is defined in the descriptor, the first rule will be returned.
+     *
+     * @param ruleDescriptor as a Reader
+     * @param parserContext the MVEL parser context
+     * @return a new rule
+     * @deprecated Use {@link MVELRuleFactory#createRule(java.io.Reader, org.mvel2.ParserContext)} instead. This method will be removed in v3.4.
+     */
+    @Deprecated
+    public static Rule createRuleFrom(Reader ruleDescriptor, ParserContext parserContext) throws Exception {
+        List<RuleDefinition> ruleDefinitions = READER.read(ruleDescriptor);
+        if (ruleDefinitions.isEmpty()) {
+            throw new IllegalArgumentException("rule descriptor is empty");
+        }
+        return createRule(ruleDefinitions.get(0), parserContext);
     }
 
     /**
@@ -71,12 +129,97 @@ public class MVELRuleFactory {
      * @param rulesDescriptor as a Reader
      * @return a set of rules
      */
-    public static Rules createRulesFrom(Reader rulesDescriptor) {
+    public Rules createRules(Reader rulesDescriptor) throws Exception {
+        return createRules(rulesDescriptor, new ParserContext());
+    }
+
+    /**
+     * Create a set of {@link MVELRule} from a Reader.
+     *
+     * @param rulesDescriptor as a Reader
+     * @return a set of rules
+     */
+    public Rules createRules(Reader rulesDescriptor, ParserContext parserContext) throws Exception {
         Rules rules = new Rules();
-        List<MVELRuleDefinition> ruleDefinition = reader.readAll(rulesDescriptor);
-        for (MVELRuleDefinition mvelRuleDefinition : ruleDefinition) {
-            rules.register(mvelRuleDefinition.create());
+        List<RuleDefinition> ruleDefinition = reader.read(rulesDescriptor);
+        for (RuleDefinition mvelRuleDefinition : ruleDefinition) {
+            rules.register(createRule(mvelRuleDefinition, parserContext));
         }
         return rules;
+    }
+
+    /**
+     * Create a set of {@link MVELRule} using a {@link YamlRuleDefinitionReader}.
+     *
+     * @param rulesDescriptor as a Reader
+     * @return a set of rules
+     * @deprecated Use {@link MVELRuleFactory#createRules(java.io.Reader)} instead. This method will be removed in v3.4.
+     */
+    @Deprecated
+    public static Rules createRulesFrom(Reader rulesDescriptor) throws Exception {
+        return createRulesFrom(rulesDescriptor, new ParserContext());
+    }
+
+    /**
+     * Create a set of {@link MVELRule} using a {@link YamlRuleDefinitionReader}.
+     *
+     * @param rulesDescriptor as a Reader
+     * @return a set of rules
+     * @deprecated Use {@link MVELRuleFactory#createRules(java.io.Reader, org.mvel2.ParserContext)} instead. This method will be removed in v3.4.
+     */
+    @Deprecated
+    public static Rules createRulesFrom(Reader rulesDescriptor, ParserContext parserContext) throws Exception {
+        Rules rules = new Rules();
+        List<RuleDefinition> ruleDefinition = READER.read(rulesDescriptor);
+        for (RuleDefinition mvelRuleDefinition : ruleDefinition) {
+            rules.register(createRule(mvelRuleDefinition, parserContext));
+        }
+        return rules;
+    }
+
+    private static Rule createRule(RuleDefinition ruleDefinition, ParserContext context) {
+        if (ruleDefinition.isCompositeRule()) {
+            return createCompositeRule(ruleDefinition, context);
+        } else {
+            return createSimpleRule(ruleDefinition, context);
+        }
+    }
+
+    private static Rule createSimpleRule(RuleDefinition ruleDefinition, ParserContext parserContext) {
+        MVELRule mvelRule = new MVELRule()
+                .name(ruleDefinition.getName())
+                .description(ruleDefinition.getDescription())
+                .priority(ruleDefinition.getPriority())
+                .when(ruleDefinition.getCondition(), parserContext);
+        for (String action : ruleDefinition.getActions()) {
+            mvelRule.then(action, parserContext);
+        }
+        return mvelRule;
+    }
+
+    private static Rule createCompositeRule(RuleDefinition ruleDefinition, ParserContext parserContext) {
+        CompositeRule compositeRule;
+        String name = ruleDefinition.getName();
+        switch (ruleDefinition.getCompositeRuleType()) {
+            case "UnitRuleGroup":
+                compositeRule = new UnitRuleGroup(name);
+                break;
+            case "ActivationRuleGroup":
+                compositeRule = new ActivationRuleGroup(name);
+                break;
+            case "ConditionalRuleGroup":
+                compositeRule = new ConditionalRuleGroup(name);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid composite rule type, must be one of " + ALLOWED_COMPOSITE_RULE_TYPES);
+        }
+        compositeRule.setDescription(ruleDefinition.getDescription());
+        compositeRule.setPriority(ruleDefinition.getPriority());
+
+        for (RuleDefinition composingRuleDefinition : ruleDefinition.getComposingRules()) {
+            compositeRule.addRule(createRule(composingRuleDefinition, parserContext));
+        }
+
+        return compositeRule;
     }
 }

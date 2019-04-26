@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jeasy</groupId>
         <artifactId>easy-rules</artifactId>
-        <version>3.2.1-SNAPSHOT</version>
+        <version>3.3.0</version>
     </parent>
 
     <artifactId>easy-rules-support</artifactId>
@@ -16,7 +16,7 @@
         <url>git@github.com:j-easy/easy-rules.git</url>
         <connection>scm:git:git@github.com:j-easy/easy-rules.git</connection>
         <developerConnection>scm:git:git@github.com:j-easy/easy-rules.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>easy-rules-3.3.0</tag>
     </scm>
 
     <issueManagement>
@@ -52,7 +52,17 @@
         <dependency>
             <groupId>org.jeasy</groupId>
             <artifactId>easy-rules-core</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
         <dependency>
@@ -87,7 +97,7 @@
                 <configuration>
                     <header>${project.basedir}/licence-header-template.txt</header>
                     <properties>
-                        <currentYear>2018</currentYear>
+                        <currentYear>2019</currentYear>
                     </properties>
                     <strictCheck>true</strictCheck>
                     <includes>

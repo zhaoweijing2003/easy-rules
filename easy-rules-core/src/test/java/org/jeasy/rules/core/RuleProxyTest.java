@@ -1,7 +1,7 @@
 /**
  * The MIT License
  *
- *  Copyright (c) 2018, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
+ *  Copyright (c) 2019, Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -52,15 +52,6 @@ public class RuleProxyTest {
     @Test
     public void asRuleForObjectThatImplementsRule() {
         Object rule = new BasicRule();
-        Rule proxy = RuleProxy.asRule(rule);
-
-        assertNotNull(proxy.getDescription());
-        assertNotNull(proxy.getName());
-    }
-
-    @Test
-    public void asRuleForObjectThatExtendsBasicRule() {
-        Object rule = new CompositeRule();
         Rule proxy = RuleProxy.asRule(rule);
 
         assertNotNull(proxy.getDescription());
